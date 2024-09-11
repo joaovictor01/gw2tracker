@@ -22,11 +22,7 @@ from src.database import (
 )
 from src.gw2api import Gw2Api
 from src.helpers import (
-    # dicts_diff,
     get_current_file_path,
-    get_ids_from_items_added,
-    get_ids_from_items_changed,
-    get_ids_from_items_removed,
     is_older_than_one_day,
 )
 
@@ -94,35 +90,6 @@ class SessionTracker:
             self.config = json.load(f)
         if self.config.get("api_key"):
             self.api_key = self.config.get("api_key")
-
-    # def check_inventory_changes(
-    #     self, previous_inventory_items: dict, current_inventory_items: dict
-    # ):
-    #     diff = dicts_diff(previous_inventory_items, current_inventory_items)
-    #     printer.pprint(diff)
-    #     items_added = []
-    #     items_changed = []
-    #     items_removed = []
-    #     try:
-    #         for item in get_ids_from_items_added(diff):
-    #             item = get_item_info_from_db(item)
-    #             items_added.append(item)
-    #     except Exception as e:
-    #         logger.warning(e)
-
-    #     try:
-    #         for item in get_ids_from_items_removed(diff):
-    #             item = get_item_info_from_db(item)
-    #             items_removed.append(item)
-    #     except Exception as e:
-    #         logger.warning(e)
-
-    #     try:
-    #         for item in get_ids_from_items_changed(diff):
-    #             item = get_item_info_from_db(item)
-    #             items_changed.append(item)
-    #     except Exception as e:
-    #         logger.warning(e)
 
     def get_buy_price_from_item(self, item_id: str) -> Optional[int]:
         logger.info(f"Getting buy price for item {item_id}")
