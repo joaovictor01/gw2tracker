@@ -6,9 +6,9 @@ import time
 import tkinter as tk
 from tkinter import CENTER, TOP, StringVar, ttk, W, E, BOTTOM, X, messagebox
 from typing import Optional, Tuple
-from session_tracker import SessionTracker
+from src.session_tracker import SessionTracker
 from loguru import logger
-from helpers import get_current_file_path, create_session_file
+from src.helpers import get_current_file_path, create_session_file
 
 BUTTONS_FRAME = None
 MAIN_FRAME = None
@@ -32,8 +32,12 @@ def load_config():
     config_file_name = (
         "config_dev.json" if os.environ.get("MODE") == "dev" else "config.json"
     )
-    with open(os.path.join(get_current_file_path(), config_file_name), "r") as f:
-        CONFIG = json.load(f)
+    try:
+        with open(os.path.join(sys._MEIPASS, config_file_name), "r") as f:
+            CONFIG = json.load(f)
+    except FileNotFoundError:
+        with open(os.path.join(get_current_file_path(), config_file_name), "r") as f:
+            CONFIG = json.load(f)
 
 
 class App(tk.Tk):

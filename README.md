@@ -29,6 +29,14 @@ docker-compose up --build
 ```
 to run the MongoDB docker container that will be used to store items, trading post and your account and character information to avoid making too many requests to the API that is slower.
 
+then run the installer, you will need `python, docker, docker-compose` installed:
+```bash
+pip3 install virtualenv
+virtualenv venv
+source venv/bin/activate
+pip3 install pyinstaller
+pyinstaller --clean -y -n "GW2Tracker" --add-data="src/config.json:src" --windowed main.py
+```
 
 ## Running
 
@@ -39,6 +47,5 @@ docker-compose up -d
 
 run the application:
 
-```
-python src/gui.py
-```
+Run the application that will be stored at `dist/GW2Tracker/`
+

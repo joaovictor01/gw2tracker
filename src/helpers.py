@@ -3,11 +3,11 @@ import pathlib
 import pprint
 from datetime import datetime
 
-from deepdiff import DeepDiff
-from deepdiff.helper import CannotCompare
+# from deepdiff import DeepDiff
+# from deepdiff.helper import CannotCompare
 from loguru import logger
 
-from database import get_item_info_from_db
+from src.database import get_item_info_from_db
 
 printer = pprint.PrettyPrinter()
 
@@ -16,30 +16,30 @@ def get_current_file_path():
     return pathlib.Path(__file__).parent.resolve()
 
 
-def compare_func(x, y, level=None):
-    try:
-        return x["id"] == y["id"]
-    except Exception:
-        raise CannotCompare() from None
+# def compare_func(x, y, level=None):
+#     try:
+#         return x["id"] == y["id"]
+#     except Exception:
+#         raise CannotCompare() from None
 
 
-def merge_dicts(dict_a, dict_b):
-    diff = DeepDiff(dict_a, dict_b)
-    keys_with_different_values = []
-    for key in diff.get("values_changed"):
-        keys_with_different_values.append(key)
-    # merged_dict =
+# def merge_dicts(dict_a, dict_b):
+#     diff = DeepDiff(dict_a, dict_b)
+#     keys_with_different_values = []
+#     for key in diff.get("values_changed"):
+#         keys_with_different_values.append(key)
+#     # merged_dict =
 
 
-def dicts_diff(dict_a, dict_b):
-    diff = DeepDiff(
-        dict_a,
-        dict_b,
-        iterable_compare_func=compare_func,
-        exclude_regex_paths="root(\[\w+\])*\['_id'\]",
-    )
-    printer.pprint(diff)
-    return diff
+# def dicts_diff(dict_a, dict_b):
+#     diff = DeepDiff(
+#         dict_a,
+#         dict_b,
+#         iterable_compare_func=compare_func,
+#         exclude_regex_paths="root(\[\w+\])*\['_id'\]",
+#     )
+#     printer.pprint(diff)
+#     return diff
 
 
 def get_ids_from_items_added(diff: dict):

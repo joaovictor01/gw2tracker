@@ -6,3 +6,5 @@ config_dev.json
 test.json
 output.json
 prices.json
+build/
+dist/
