@@ -40,9 +40,14 @@ class SessionTracker:
         self.load_config()
         self.start_value = 0
         self.current_value = 0
+        self.inventory_value = 0
+        self.materials_value = 0
         self.profit_value = 0
         if not self.api_key:
-            self.set_api_key(self.config.get("api_key"))
+            if api_key := os.getenv("GW2_API_KEY"):
+                self.set_api_key(api_key)
+            else:
+                self.set_api_key(self.config.get("api_key"))
         self.api = Gw2Api(api_key=self.api_key)
         self.api.set_active_character(self.config.get("character"))
         update_tp_prices_thread = threading.Thread(
@@ -61,6 +66,8 @@ class SessionTracker:
     def reset_session(self):
         self.start_value = 0
         self.current_value = 0
+        self.inventory_value = 0
+        self.materials_value = 0
         self.profit_value = 0
         self.start_time = datetime.now()
 
@@ -83,9 +90,25 @@ class SessionTracker:
 
     def load_config(self):
         logger.info("Loading config")
+
+        if os.environ.get("MODE") == "dev":
+            config = {
+                "api_key": "635FA675-6982-634B-9020-342DD7A589A854A0250D-0BF8-4787-B756-BC0394806C6F",
+                "MONGO_INITDB_ROOT_USERNAME": "root",
+                "MONGO_INITDB_ROOT_PASSWORD": "password",
+                "ME_CONFIG_BASICAUTH_USERNAME": "mexpress",
+                "ME_CONFIG_BASICAUTH_PASSWORD": "password",
+                "character": "John The Tormentor",
+                "update_every_minutes": 1,
+            }
+            self.config = config
+            if self.config.get("api_key"):
+                self.api_key = self.config.get("api_key")
+            return
         config_file_name = (
             "config_dev.json" if os.environ.get("MODE") == "dev" else "config.json"
         )
+        print(f"Config file: {config_file_name}")
         with open(os.path.join(get_current_file_path(), config_file_name), "r") as f:
             self.config = json.load(f)
         if self.config.get("api_key"):
@@ -228,6 +251,7 @@ class SessionTracker:
         character_name = character_name or self.api.get_active_character()
         inventory_price = self.calculate_items_value(inventory_items, trading_post_mode)
         logger.info(f"Inventory value: {inventory_price}")
+        self.inventory_value = inventory_price
         add_current_inventory_value_to_db(inventory_price, character_name)
         return inventory_price
 
@@ -243,6 +267,7 @@ class SessionTracker:
             material_storage_items, trading_post_mode
         )
         logger.info(f"materials_storage value: {materials_storage_price}")
+        self.materials_value = materials_storage_price
         add_current_materials_storage_value_to_db(
             materials_storage_price, character_name
         )
@@ -278,6 +303,21 @@ class SessionTracker:
         current_total = current_inventory_value + current_materials_storage_value
         return current_total
 
+    def get_values(self, character_name: Optional[str] = None):
+        character_name = character_name or self.api.get_active_character()
+        current_inventory_value = self.calculate_inventory_value(
+            self.api.get_character_inventory_items()
+        )
+        current_materials_storage_value = self.calculate_materials_storage_value(
+            self.api.get_materials()
+        )
+        current_total = current_inventory_value + current_materials_storage_value
+        return {
+            "inventory_value": current_inventory_value,
+            "materials_value": current_materials_storage_value,
+            "total_value": current_total,
+        }
+
     def get_current_total_value(self, character_name: Optional[str] = None):
         character_name = character_name or self.api.get_active_character()
         items_value = self.get_current_items_value(character_name)
@@ -287,15 +327,22 @@ class SessionTracker:
     def start_session(self, character_name: Optional[str] = None):
         if character_name:
             self.api.set_active_character(character_name)
-        # session_start_items_value = self.get_current_items_value(character_name)
         session_start_value = self.get_current_total_value(character_name)
         self.start_value = session_start_value
         logger.info(f"START VALUE: {self.start_value}")
-        return {"start_value": session_start_value}
+        return {
+            "start_value": session_start_value,
+            "inventory_value": self.inventory_value,
+            "materials_value": self.materials_value,
+        }
 
     def update_session(self, character_name: Optional[str] = None):
         character_name = character_name or self.api.get_active_character()
-        # self.current_value = self.get_current_items_value(character_name)
         self.current_value = self.get_current_total_value(character_name)
         self.profit_value = self.current_value - self.start_value
-        return {"current_value": self.current_value, "profit_value": self.profit_value}
+        return {
+            "current_value": self.current_value,
+            "inventory_value": self.inventory_value,
+            "materials_value": self.materials_value,
+            "profit_value": self.profit_value,
+        }

@@ -1,5 +1,5 @@
+import os
 import sys
-import pprint
 import urllib.parse
 from typing import List, Optional
 
@@ -17,7 +17,6 @@ from src.database import (
     add_coins_amount_to_db,
 )
 
-printer = pprint.PrettyPrinter()
 logger.remove()
 logger.add(sys.stderr, level="INFO")
 
@@ -29,7 +28,10 @@ class Gw2Api:
         self.base_url = "https://api.guildwars2.com/v2"
         self.owned_items_tp_prices = {}
         self.active_character = ""
-        self.headers = {"Authorization": f"Bearer {api_key}"}
+        if os.environ.get("GW2_API_KEY"):
+            self.headers = {"Authorization": f"Bearer {api_key}"}
+        else:
+            self.headers = {"Authorization": f"Bearer {api_key}"}
 
     @staticmethod
     def url_encode(string: str) -> str:

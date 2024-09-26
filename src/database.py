@@ -1,4 +1,6 @@
+import json
 import os
+import pathlib
 import pprint
 import sys
 from datetime import datetime, timezone
@@ -8,6 +10,7 @@ from dotenv import load_dotenv
 from loguru import logger
 from pymongo import MongoClient
 
+CONFIG = {}
 logger.remove()
 logger.add(sys.stderr, level="INFO")
 
@@ -15,10 +18,46 @@ load_dotenv()
 
 printer = pprint.PrettyPrinter()
 
+
+def get_current_file_path():
+    return pathlib.Path(__file__).parent.resolve()
+
+
+def load_config():
+    global CONFIG
+    logger.info("Loading config")
+    if os.environ.get("MODE") == "dev":
+        if os.environ.get("MODE") == "dev":
+            config = {
+                "api_key": "635FA675-6982-634B-9020-342DD7A589A854A0250D-0BF8-4787-B756-BC0394806C6F",
+                "MONGO_INITDB_ROOT_USERNAME": "root",
+                "MONGO_INITDB_ROOT_PASSWORD": "password",
+                "ME_CONFIG_BASICAUTH_USERNAME": "mexpress",
+                "ME_CONFIG_BASICAUTH_PASSWORD": "password",
+                "character": "John The Tormentor",
+                "update_every_minutes": 1,
+            }
+            CONFIG = config
+            return
+
+    config_file_name = (
+        "config_dev.json" if os.environ.get("MODE") == "dev" else "config.json"
+    )
+    print(f"Config file: {config_file_name}")
+    try:
+        with open(os.path.join(sys._MEIPASS, config_file_name), "r") as f:
+            CONFIG = json.load(f)
+    except Exception:
+        with open(os.path.join(get_current_file_path(), config_file_name), "r") as f:
+            CONFIG = json.load(f)
+
+
+load_config()
+print(f"Loaded config: {CONFIG}")
 mongo_client = MongoClient(
-    host="localhost:27017",
-    username=os.environ.get("MONGO_INITDB_ROOT_USERNAME"),
-    password=os.environ.get("MONGO_INITDB_ROOT_PASSWORD"),
+    host="172.17.0.1:27017",
+    username=CONFIG.get("MONGO_INITDB_ROOT_USERNAME"),
+    password=CONFIG.get("MONGO_INITDB_ROOT_PASSWORD"),
     serverSelectionTimeoutMS=60000,
 )
 

@@ -1,5 +1,9 @@
 {
-    "api_key": "PUT_YOUR_API_KEY_HERE",
-    "character": "Your Character Name Here",
+    "api_key": "BA1F1912-47A4-304F-A661-F315E8E5C00D04C35D44-23F6-46C2-B7FB-3EE732F88FA6",
+    "MONGO_INITDB_ROOT_USERNAME": "root",
+    "MONGO_INITDB_ROOT_PASSWORD":"changeme!",
+    "ME_CONFIG_BASICAUTH_USERNAME":"mexpress",
+    "ME_CONFIG_BASICAUTH_PASSWORD":"changeme!",
+    "character": "John The Tormentor",
     "update_every_minutes": 1
 }

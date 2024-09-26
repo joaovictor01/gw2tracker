@@ -29,13 +29,27 @@ def set_api_key(key: str):
 def load_config():
     global CONFIG
     logger.info("Loading config")
+    if os.environ.get("MODE") == "dev":
+        config = {
+            "api_key": "635FA675-6982-634B-9020-342DD7A589A854A0250D-0BF8-4787-B756-BC0394806C6F",
+            "MONGO_INITDB_ROOT_USERNAME": "root",
+            "MONGO_INITDB_ROOT_PASSWORD": "password",
+            "ME_CONFIG_BASICAUTH_USERNAME": "mexpress",
+            "ME_CONFIG_BASICAUTH_PASSWORD": "password",
+            "character": "John The Tormentor",
+            "update_every_minutes": 1,
+        }
+        CONFIG = config
+        return
+
     config_file_name = (
         "config_dev.json" if os.environ.get("MODE") == "dev" else "config.json"
     )
+    print(f"Config file: {config_file_name}")
     try:
         with open(os.path.join(sys._MEIPASS, config_file_name), "r") as f:
             CONFIG = json.load(f)
-    except FileNotFoundError:
+    except Exception:
         with open(os.path.join(get_current_file_path(), config_file_name), "r") as f:
             CONFIG = json.load(f)
 
@@ -51,8 +65,8 @@ class App(tk.Tk):
         self.minsize(size[0], size[1])
         self.configure_style()
         load_config()
-        if CONFIG.get("api_key"):
-            SESSION_TRACKER = SessionTracker(CONFIG.get("api_key"))
+        if api_key := (CONFIG.get("api_key") or os.getenv("GW2_API_KEY")):
+            SESSION_TRACKER = SessionTracker(api_key)
             self._frame = None
             MAIN_FRAME = MainFrame(self)
             self.main_frame = MAIN_FRAME
@@ -61,7 +75,8 @@ class App(tk.Tk):
             BUTTONS_FRAME = ButtonsFrame(self)
             BUTTONS_FRAME.pack(side=BOTTOM, fill=X)
         else:
-            self._frame = Config(self)
+            # self._frame = Config(self)
+            pass
 
     def load_main_frame(self):
         self.main_frame = MAIN_FRAME
@@ -134,12 +149,27 @@ class SessionProfitTracker(ttk.Frame):
     def set_current_value(self, value: int):
         self.current_value = str(value)
 
+    def set_materials_value(self, value: int):
+        self.materials_value = str(value)
+
+    def set_inventory_value(self, value: int):
+        self.inventory_value = str(value)
+
     def set_profit(self, value: int):
         self.profit = str(value)
 
-    def set_values(self, start: int = 0, current: int = 0, profit: int = 0):
+    def set_values(
+        self,
+        start: int = 0,
+        current: int = 0,
+        materials: int = 0,
+        inventory: int = 0,
+        profit: int = 0,
+    ):
         self.set_start_value(start)
         self.set_current_value(current)
+        self.set_materials_value(materials)
+        self.set_inventory_value(inventory)
         self.set_profit(profit)
 
     def format_value(self, value) -> str:
@@ -153,6 +183,14 @@ class SessionProfitTracker(ttk.Frame):
     def update_values(self):
         self.start_value_label["text"] = self.format_value(self.start_value)
         self.start_value_label.configure(text=self.format_value(self.start_value))
+        self.materials_value_label["text"] = self.format_value(self.materials_value)
+        self.materials_value_label.configure(
+            text=self.format_value(self.materials_value)
+        )
+        self.inventory_value_label["text"] = self.format_value(self.inventory_value)
+        self.inventory_value_label.configure(
+            text=self.format_value(self.inventory_value)
+        )
         self.current_value_label["text"] = self.format_value(self.current_value)
         self.current_value_label.configure(text=self.format_value(self.current_value))
         self.profit_label["text"] = self.format_value(self.profit)
@@ -164,7 +202,7 @@ class SessionProfitTracker(ttk.Frame):
         self.style = "SessionFrame"
         parent.columnconfigure(0, weight=2)
         parent.columnconfigure(1, weight=3)
-        parent.rowconfigure((0, 1, 2), weight=1)
+        parent.rowconfigure((0, 1, 2, 3, 4), weight=1)
 
         start_value_text_label = ttk.Label(parent, text="Start value")
         start_value_text_label.grid(row=0, column=0, sticky=W, padx=2, pady=2)
@@ -178,10 +216,20 @@ class SessionProfitTracker(ttk.Frame):
         self.current_value_label = ttk.Label(parent, text=self.current_value)
         self.current_value_label.grid(row=1, column=1, sticky=W, padx=2, pady=2)
 
+        materials_value_text_label = ttk.Label(parent, text="Materials value")
+        materials_value_text_label.grid(row=2, column=0, sticky=W, padx=2, pady=2)
+        self.materials_value_label = ttk.Label(parent, text=self.current_value)
+        self.materials_value_label.grid(row=2, column=1, sticky=W, padx=2, pady=2)
+
+        inventory_value_text_label = ttk.Label(parent, text="Inventory value")
+        inventory_value_text_label.grid(row=3, column=0, sticky=W, padx=2, pady=2)
+        self.inventory_value_label = ttk.Label(parent, text=self.current_value)
+        self.inventory_value_label.grid(row=3, column=1, sticky=W, padx=2, pady=2)
+
         profit_text_label = ttk.Label(parent, text="Profit")
-        profit_text_label.grid(row=2, column=0, sticky=W + E, padx=2, pady=2)
+        profit_text_label.grid(row=4, column=0, sticky=W + E, padx=2, pady=2)
         self.profit_label = ttk.Label(parent, text=self.profit)
-        self.profit_label.grid(row=2, column=1, sticky=W, padx=2, pady=2)
+        self.profit_label.grid(row=4, column=1, sticky=W, padx=2, pady=2)
 
         self.start_new_session_btn = ttk.Button(
             BUTTONS_FRAME, text="New session", command=lambda: start_new_session()
@@ -262,6 +310,12 @@ def start_session_tracker():
     start_session_values = SESSION_TRACKER.start_session()
     start_value = start_session_values.get("start_value")
     MAIN_FRAME.session_profit_tracker.set_start_value(start_value)
+    MAIN_FRAME.session_profit_tracker.set_materials_value(
+        start_session_values.get("materials_value")
+    )
+    MAIN_FRAME.session_profit_tracker.set_inventory_value(
+        start_session_values.get("inventory_value")
+    )
     MAIN_FRAME.session_profit_tracker.update_values()
     MAIN_FRAME.pack()
     while not STOP_SESSION:
@@ -269,6 +323,12 @@ def start_session_tracker():
         values = SESSION_TRACKER.update_session()
         MAIN_FRAME.session_profit_tracker.set_start_value(start_value)
         MAIN_FRAME.session_profit_tracker.set_current_value(values.get("current_value"))
+        MAIN_FRAME.session_profit_tracker.set_materials_value(
+            values.get("materials_value")
+        )
+        MAIN_FRAME.session_profit_tracker.set_inventory_value(
+            values.get("inventory_value")
+        )
         MAIN_FRAME.session_profit_tracker.set_profit(values.get("profit_value"))
         MAIN_FRAME.session_profit_tracker.update_values()
         MAIN_FRAME.pack()
