@@ -6,3 +6,5 @@ tk
 loguru
 deepdiff
 pyinstaller
+fastapi
+uvicorn

@@ -157,13 +157,22 @@ def get_items_info_from_db():
 def add_item_info_to_db(item: dict):
     logger.info("Adding item info to the database")
     items_info_collection = get_items_info_collection()
-    items_info_collection.insert_one(item)
+
+    # items_info_collection.update_one(
+    #     {"id": item.get("id")},
+    #     {"$set": item},
+    #     upsert=True,
+    # )
+    try:
+        items_info_collection.insert_one(item)
+    except Exception:
+        pass
 
 
 def get_item_info_from_db(item_id: str):
     logger.info("Getting items info from the database")
     items_info_collection = get_items_info_collection()
-    item = items_info_collection.find_one({"id": item_id})
+    item = items_info_collection.find_one({"id": item_id}) or None
     logger.debug(f"Item found {item}")
     return item
 

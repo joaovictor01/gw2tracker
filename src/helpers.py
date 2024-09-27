@@ -7,7 +7,7 @@ from datetime import datetime
 # from deepdiff.helper import CannotCompare
 from loguru import logger
 
-from src.database import get_item_info_from_db
+from database import get_item_info_from_db
 
 printer = pprint.PrettyPrinter()
 
@@ -59,6 +59,8 @@ def convert_list_to_dict(lst: list) -> dict:
 
 def is_item_sellable(item_id: str) -> bool:
     item_info = get_item_info_from_db(item_id)
+    if not item_info:
+        logger.warning(f"Item {item_id} not found in the database")
     if "NoSell" in item_info.get("flags") or "AccountBound" in item_info.get("flags"):
         return False
     return True
@@ -91,3 +93,12 @@ def create_session_file(folder_name: str):
     return os.path.join(
         create_program_folder(folder_name), f"session_{datetime_str}.json"
     )
+
+
+def format_value(value) -> str:
+    value = int(value)
+    gold = int(value / (100 * 100))
+    silver = int(int(str(value / (100 * 100)).split(".")[1]) / 100)
+    copper = int(str(value / 100).split(".")[1])
+    formatted_value = f"{gold} gold, {silver} silver, {copper} copper"
+    return formatted_value
